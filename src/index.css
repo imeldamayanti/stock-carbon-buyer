@@ -1,0 +1,123 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 145 15% 98%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 145 20% 97%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 145 20% 97%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 145 85% 42%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 145 40% 92%;
+    --secondary-foreground: 145 95% 15%;
+
+    --muted: 145 25% 95%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 145 60% 88%;
+    --accent-foreground: 145 95% 20%;
+
+    --success: 145 85% 42%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 43 96% 56%;
+    --warning-foreground: 25 95% 5%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 145 25% 88%;
+    --input: 145 25% 95%;
+    --ring: 145 85% 42%;
+
+    --radius: 0.5rem;
+
+    /* Sidebar with vibrant green tones */
+    --sidebar-background: 145 25% 97%;
+    --sidebar-foreground: 145 95% 15%;
+    --sidebar-primary: 145 85% 42%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 145 40% 92%;
+    --sidebar-accent-foreground: 145 95% 15%;
+    --sidebar-border: 145 30% 85%;
+    --sidebar-ring: 145 85% 42%;
+
+    /* Custom vibrant green gradients for eco theme */
+    --gradient-eco: linear-gradient(135deg, hsl(145 85% 42%), hsl(165 85% 50%));
+    --gradient-subtle: linear-gradient(180deg, hsl(145 25% 97%), hsl(145 35% 93%));
+    
+    /* Vibrant eco-friendly shadows */
+    --shadow-green: 0 4px 20px -2px hsl(145 85% 42% / 0.15);
+    --shadow-elevated: 0 10px 40px -10px hsl(145 85% 42% / 0.2);
+  }
+
+  .dark {
+    --background: 145 30% 8%;
+    --foreground: 210 40% 98%;
+
+    --card: 145 25% 12%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 145 25% 12%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 145 85% 52%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 145 25% 16%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 145 20% 18%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 145 30% 20%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 145 25% 20%;
+    --input: 145 25% 16%;
+    --ring: 145 85% 52%;
+    
+    /* Dark mode sidebar with vibrant green accents */
+    --sidebar-background: 145 20% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 145 85% 52%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 145 25% 18%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 145 25% 18%;
+    --sidebar-ring: 145 85% 52%;
+
+    /* Dark mode vibrant eco gradients */
+    --gradient-eco: linear-gradient(135deg, hsl(145 85% 45%), hsl(165 85% 40%));
+    --gradient-subtle: linear-gradient(180deg, hsl(145 20% 10%), hsl(145 25% 15%));
+    
+    /* Dark mode vibrant eco shadows */
+    --shadow-green: 0 4px 20px -2px hsl(145 85% 45% / 0.25);
+    --shadow-elevated: 0 10px 40px -10px hsl(145 85% 45% / 0.3);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
