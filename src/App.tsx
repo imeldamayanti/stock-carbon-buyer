@@ -79,7 +79,7 @@ const App = () => {
 
 const AppLayout = () => {
   const location = useLocation();
-  const hideSidebarRoutes = ["/register-company","/login-company"];
+  const hideSidebarRoutes = ["/register-company","/login-company", "/"];
   const shouldHideSidebar = hideSidebarRoutes.includes(location.pathname);
 
   return (
@@ -90,7 +90,7 @@ const AppLayout = () => {
 
           <main className="flex-1">
             <Routes>
-              <Route path="/" element={<Index />} />
+              <Route path="/" element={<RegisterCompany />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/register-company" element={<RegisterCompany />} />
               <Route path="/login-company" element={<Login />} />
