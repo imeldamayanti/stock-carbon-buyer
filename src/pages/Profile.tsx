@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { apiFetch } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,21 +10,61 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { User, Building2, Mail, Phone, MapPin, Edit3, Save, Camera, Award, Target, Leaf } from "lucide-react";
+import axios from "axios";
+import { getAuthData } from "@/lib/auth";
 
 export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    firstName: "John",
-    lastName: "Smith",
-    email: "john.smith@company.com",
-    phone: "+1 (555) 123-4567",
-    company: "Green Tech Solutions",
-    position: "Sustainability Manager",
-    address: "123 Business Ave, New York, NY 10001",
-    // bio: "Passionate about sustainable business practices and carbon neutrality. Leading our company's environmental initiatives since 2020.",
-    website: "https://greentechsolutions.com"
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    company: "",
+    position: "",
+    address: "",
+    website: "",
   });
 
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const { token } = getAuthData();
+      if (!token) return;
+
+      try {
+        const response = await apiFetch("/api/auth/profile", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        console.log(response);
+        const result = await response.json();
+
+        if (result.success) {
+          const user = result.data.user;
+
+          setFormData({
+            firstName: user.name?.split(" ")[0] || "",
+            lastName: user.name?.split(" ")[1] || "",
+            email: user.email || "",
+            phone: "",
+            company: "",
+            position: "",
+            address: "",
+            website: "",
+          });
+        } else {
+          console.error("Gagal ambil data user:", result.message);
+        }
+      } catch (error) {
+        console.error("Error saat fetch profile:", error);
+      }
+    };
+
+    fetchProfile();
+  }, []);
+  
   const [notifications, setNotifications] = useState({
     emailUpdates: true,
     carbonAlerts: true,
@@ -77,7 +118,6 @@ export default function Profile() {
       <Tabs defaultValue="profile" className="space-y-6">
         <TabsList>
           <TabsTrigger value="profile">Profile Information</TabsTrigger>
-          {/* < value="carbon">Carbon Impact</ TabsTrigger> */}
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
 
@@ -89,12 +129,14 @@ export default function Profile() {
             <CardContent className="space-y-6">
               <div className="flex items-center space-x-6">
                 <div className="relative">
-                  <Avatar className="h-24 w-24">
-                    <AvatarImage src="/placeholder-avatar.jpg" />
-                    <AvatarFallback className="text-lg">
-                      {formData.firstName[0]}{formData.lastName[0]}
-                    </AvatarFallback>
-                  </Avatar>
+                  {/* <Avatar className="h-24 w-24">
+                  <AvatarImage
+                    src={`https://ui-avatars.com/api/?name=${formData.firstName}+${formData.lastName}&background=random&size=128`}
+                  />
+                  <AvatarFallback className="text-lg">
+                    {formData.firstName[0]}{formData.lastName[0]}
+                  </AvatarFallback>
+                  </Avatar> */}
                   {isEditing && (
                     <Button
                       size="sm"

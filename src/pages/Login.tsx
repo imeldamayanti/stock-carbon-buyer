@@ -1,3 +1,5 @@
+import { saveAuthData } from "@/lib/auth";
+import { apiFetch } from "@/lib/auth";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,10 +32,13 @@ const LoginCompany = () => {
       form.append("email", formData.email); // pakai 'username' kalau backend pakai OAuth2PasswordRequestForm
       form.append("password", formData.password);
 
-      const response = await fetch("http://localhost:8000/api/auth/login", {
+      const response = await apiFetch("/api/auth/login", {
         method: "POST",
         body: form,
       });
+
+      const result = await response.json();
+
 
       if (!response.ok) {
         const err = await response.json();
@@ -41,8 +46,9 @@ const LoginCompany = () => {
         throw new Error(err.detail || "Login failed");
       }
 
-      const data = await response.json();
-      console.log("Login success:", data);
+        const { token, user, roles, permissions } = result.data;
+        saveAuthData(token, user, roles, permissions);
+
 
       toast({
         title: "Login Successful",

@@ -1,6 +1,8 @@
 import { useState } from "react"
 import { BarChart3, Target, Building2, MapPin, FileText, Settings, User, HelpCircle, History, Globe, Sun, Moon } from "lucide-react"
 import { NavLink, useLocation } from "react-router-dom"
+import { LogOut } from "lucide-react"
+import { logout } from "@/lib/auth";
 
 import {
   Sidebar,
@@ -119,27 +121,6 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Other Pages Section */}
-        {/* <SidebarGroup>
-          <SidebarGroupLabel className="text-xs uppercase tracking-wider font-semibold">
-            Other Pages
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {additionalItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink to={item.url} end className={getNavCls}>
-                      <item.icon className="mr-2 h-4 w-4" />
-                      <span className="inherit">{item.title}</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup> */}
-
         {/* Settings */}
         {!isCollapsed && (
           <SidebarGroup>
@@ -187,7 +168,21 @@ export function AppSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
         )}
-      </SidebarContent>
+      
+        <div className="mt-auto p-3 border-t border-sidebar-border">
+          <Button
+            variant="destructive"
+            className="w-full justify-start"
+            onClick={() => {
+              localStorage.clear()
+              window.location.href = "/login-company" // arahkan ulang ke halaman login
+            }}
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Logout
+          </Button>
+        </div>
+    </SidebarContent>
     </Sidebar>
   )
 }

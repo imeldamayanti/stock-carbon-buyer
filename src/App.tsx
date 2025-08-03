@@ -19,47 +19,23 @@ import PurchaseHistory from "./pages/PurchaseHistory";
 import Profile from "./pages/Profile";
 import Help from "./pages/Help";
 import NotFound from "./pages/NotFound";
+import { Navigate } from "react-router-dom";
+
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+}
+
+const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    return <Navigate to="/login-company" replace />;
+  }
+
+  return <>{children}</>;
+};
 
 const queryClient = new QueryClient();
-
-// const App = () => (
-//   <QueryClientProvider client={queryClient}>
-//     <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme" >
-//       <TooltipProvider>
-//         <Toaster />
-//         <Sonner />
-//         <BrowserRouter>
-//           <div className="min-h-screen flex flex-col">
-//             {/* Content area */}
-//             <div className="flex flex-1">
-//               <SidebarProvider>
-//                 <AppSidebar />
-                
-//                 <main className="flex-1">
-//                   <Routes>
-//                     <Route path="/" element={<Index />} />
-//                     <Route path="/admin" element={<Admin />} />
-//                     <Route path="/register-company" element={<RegisterCompany />} />
-//                     <Route path="/company-needs" element={<CompanyNeeds />} />
-//                     <Route path="/dashboard-company" element={<DashboardCompany />} />
-//                     <Route path="/purchase-history" element={<PurchaseHistory />} />
-//                     <Route path="/profile" element={<Profile />} />
-//                     <Route path="/help" element={<Help />} />
-//                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-//                     <Route path="*" element={<NotFound />} />
-//                   </Routes>
-//                 </main>
-//               </SidebarProvider>
-//             </div>
-            
-//             {/* Global Footer */}
-//             {/* <Footer /> */}
-//           </div>
-//         </BrowserRouter>
-//       </TooltipProvider>
-//     </ThemeProvider>
-//   </QueryClientProvider>
-// );
 
 const App = () => {
   return (
@@ -90,7 +66,7 @@ const AppLayout = () => {
 
           <main className="flex-1">
             <Routes>
-              <Route path="/" element={<RegisterCompany />} />
+              {/* <Route path="/" element={<RegisterCompany />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/register-company" element={<RegisterCompany />} />
               <Route path="/login-company" element={<Login />} />
@@ -99,7 +75,57 @@ const AppLayout = () => {
               <Route path="/purchase-history" element={<PurchaseHistory />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/help" element={<Help />} />
+              <Route path="*" element={<NotFound />} /> */}
+
+              <Route path="/" element={<RegisterCompany />} />
+              <Route path="/admin" element={<Admin />} />
+              <Route path="/register-company" element={<RegisterCompany />} />
+              <Route path="/login-company" element={<Login />} />
+
+              {/* Protected Routes */}
+              <Route
+                path="/company-needs"
+                element={
+                  <ProtectedRoute>
+                    <CompanyNeeds />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard-company"
+                element={
+                  <ProtectedRoute>
+                    <DashboardCompany />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/purchase-history"
+                element={
+                  <ProtectedRoute>
+                    <PurchaseHistory />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/help"
+                element={
+                  <ProtectedRoute>
+                    <Help />
+                  </ProtectedRoute>
+                }
+              />
+
               <Route path="*" element={<NotFound />} />
+
             </Routes>
           </main>
         </SidebarProvider>
