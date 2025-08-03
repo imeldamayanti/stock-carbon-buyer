@@ -6,6 +6,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import Map from '@/components/Map';
+import { useTheme } from 'next-themes';
+import { motion } from 'framer-motion';
+
+
 import { 
   TreePine, 
   Award, 
@@ -21,9 +25,26 @@ import {
   ChartBar
 } from 'lucide-react';
 
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer
+} from 'recharts';
+
 const DashboardCompany = () => {
-  // Mock data - in real app this would come from API/database
-  const [carbonData] = useState({
+const { theme } = useTheme();
+const isDark = theme === 'dark';
+const strokeColor = isDark ? '#22D3EE' : '#10B981'; // cyan-400 vs green-500
+const gridColor = isDark ? '#334155' : '#E5E7EB';   // slate-700 vs gray-200
+const axisColor = isDark ? '#94A3B8' : '#a3bdb9ff'; 
+
+const MotionCard = motion(Card);
+
+const [carbonData] = useState({
     totalOffset: 1250,
     monthlyGoal: 500,
     currentMonth: 380,
@@ -32,6 +53,13 @@ const DashboardCompany = () => {
     totalInvestment: 45000,
     projectedImpact: 2500
   });
+
+  const data = [
+    { month: 'Jan 2024', offset: 300 },
+    { month: 'Feb 2024', offset: 250 },
+    { month: 'Mar 2024', offset: 320 },
+    { month: 'Apr 2024', offset: 380 }
+  ];
 
   const [purchasedProjects] = useState([
     {
@@ -97,6 +125,7 @@ const DashboardCompany = () => {
 
   const progressPercentage = (carbonData.currentMonth / carbonData.monthlyGoal) * 100;
 
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <div className="container mx-auto p-6 space-y-8">
@@ -112,14 +141,6 @@ const DashboardCompany = () => {
             <Button className="flex items-center gap-2">
               <Download className="h-4 w-4" />
               Export Report
-            </Button>
-            <Button variant="outline" className="flex items-center gap-2">
-              <Target className="h-4 w-4" />
-              Set Goals
-            </Button>
-            <Button variant="outline" className="flex items-center gap-2">
-              <Eye className="h-4 w-4" />
-              View Certificates
             </Button>
           </div>
         </div>
@@ -139,15 +160,11 @@ const DashboardCompany = () => {
 
           <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/50 dark:to-cyan-950/50 border-blue-200 dark:border-blue-800">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-blue-700 dark:text-blue-300">Monthly Progress</CardTitle>
+              <CardTitle className="text-sm font-medium text-blue-700 dark:text-blue-300">Total Carbon Uptake</CardTitle>
               <TrendingUp className="h-4 w-4 text-blue-600 dark:text-blue-400" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-blue-800 dark:text-blue-200">{carbonData.currentMonth}</div>
-              <div className="flex items-center gap-2 mt-2">
-                <Progress value={progressPercentage} className="flex-1" />
-                <span className="text-xs text-blue-600 dark:text-blue-400">{Math.round(progressPercentage)}%</span>
-              </div>
               <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">of {carbonData.monthlyGoal} tons goal</p>
             </CardContent>
           </Card>
@@ -213,10 +230,10 @@ const DashboardCompany = () => {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="map">Project Map</TabsTrigger>
-            <TabsTrigger value="projects">My Projects</TabsTrigger>
+            {/* <TabsTrigger value="projects">My Projects</TabsTrigger> */}
             {/* <TabsTrigger value="activity">Activity</TabsTrigger> */}
           </TabsList>
 
@@ -228,22 +245,29 @@ const DashboardCompany = () => {
                   <CardDescription>Your carbon offset journey over time</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    {[
-                      { month: 'Jan 2024', offset: 300, color: 'bg-green-500' },
-                      { month: 'Feb 2024', offset: 250, color: 'bg-blue-500' },
-                      { month: 'Mar 2024', offset: 320, color: 'bg-purple-500' },
-                      { month: 'Apr 2024', offset: 380, color: 'bg-amber-500' }
-                    ].map((item) => (
-                      <div key={item.month} className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-3 h-3 rounded-full ${item.color}`} />
-                          <span className="text-sm font-medium">{item.month}</span>
-                        </div>
-                        <span className="text-sm text-muted-foreground">{item.offset} tons CO₂</span>
-                      </div>
-                    ))}
-                  </div>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="month" tick={{ fontSize: 12, fill: axisColor }} />
+                        <YAxis unit="t" tick={{ fontSize: 12, fill: axisColor }} />
+                        <Tooltip
+                          contentStyle={{
+                            fontSize: 12,
+                            backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                            borderColor: isDark ? '#334155' : '#e5e7eb',
+                            color: isDark ? '#f1f5f9' : '#0f172a'
+                          }}
+                        />
+                      <Line
+                        type="monotone"
+                        dataKey="offset"
+                        stroke="#10B981" // green-500
+                        strokeWidth={3}
+                        dot={{ r: 5 }}
+                        activeDot={{ r: 8 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
                 </CardContent>
               </Card>
 
@@ -300,7 +324,7 @@ const DashboardCompany = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="projects" className="space-y-6">
+          {/* <TabsContent value="projects" className="space-y-6">
             <div className="grid gap-6">
               {purchasedProjects.map((project) => (
                 <Card key={project.id}>
@@ -360,7 +384,7 @@ const DashboardCompany = () => {
                 </Card>
               ))}
             </div>
-          </TabsContent>
+          </TabsContent> */}
 
           <TabsContent value="activity" className="space-y-6">
             <Card>

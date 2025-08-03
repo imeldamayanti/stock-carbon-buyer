@@ -98,10 +98,10 @@ export default function Help() {
       </div>
 
       <Tabs defaultValue="faq" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="faq">FAQ</TabsTrigger>
           <TabsTrigger value="contact">Contact</TabsTrigger>
-          <TabsTrigger value="guides">Guides</TabsTrigger>
+          {/* <TabsTrigger value="guides">Guides</TabsTrigger> */}
           <TabsTrigger value="status">System Status</TabsTrigger>
         </TabsList>
 
@@ -229,87 +229,7 @@ export default function Help() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="guides" className="space-y-6">
-          <div className="grid md:grid-cols-2 gap-6">
-            <Card className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-start space-x-4">
-                  <div className="mt-1">
-                    <FileText className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="font-semibold">Getting Started Guide</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Learn how to create your account, browse projects, and make your first carbon offset purchase.
-                    </p>
-                    <Button variant="link" className="p-0 h-auto">
-                      Read Guide →
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-start space-x-4">
-                  <div className="mt-1">
-                    <HelpCircle className="h-6 w-6 text-green-600" />
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="font-semibold">Understanding Carbon Credits</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Comprehensive guide to carbon credits, verification standards, and project types.
-                    </p>
-                    <Button variant="link" className="p-0 h-auto">
-                      Read Guide →
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-start space-x-4">
-                  <div className="mt-1">
-                    <Zap className="h-6 w-6 text-yellow-600" />
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="font-semibold">Corporate Reporting</h3>
-                    <p className="text-sm text-muted-foreground">
-                      How to use carbon offsets for sustainability reporting and compliance requirements.
-                    </p>
-                    <Button variant="link" className="p-0 h-auto">
-                      Read Guide →
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-start space-x-4">
-                  <div className="mt-1">
-                    <Shield className="h-6 w-6 text-purple-600" />
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="font-semibold">Security & Privacy</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Learn about our security measures and how we protect your data and transactions.
-                    </p>
-                    <Button variant="link" className="p-0 h-auto">
-                      Read Guide →
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="status" className="space-y-6">
+       <TabsContent value="status" className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>System Status</CardTitle>

@@ -20,7 +20,7 @@ export default function Profile() {
     company: "Green Tech Solutions",
     position: "Sustainability Manager",
     address: "123 Business Ave, New York, NY 10001",
-    bio: "Passionate about sustainable business practices and carbon neutrality. Leading our company's environmental initiatives since 2020.",
+    // bio: "Passionate about sustainable business practices and carbon neutrality. Leading our company's environmental initiatives since 2020.",
     website: "https://greentechsolutions.com"
   });
 
@@ -77,7 +77,7 @@ export default function Profile() {
       <Tabs defaultValue="profile" className="space-y-6">
         <TabsList>
           <TabsTrigger value="profile">Profile Information</TabsTrigger>
-          <TabsTrigger value="carbon">Carbon Impact</TabsTrigger>
+          {/* < value="carbon">Carbon Impact</ TabsTrigger> */}
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
 
@@ -200,121 +200,11 @@ export default function Profile() {
                 />
               </div>
 
-              <div>
-                <Label htmlFor="bio">Bio</Label>
-                <Textarea
-                  id="bio"
-                  value={formData.bio}
-                  onChange={(e) => handleInputChange("bio", e.target.value)}
-                  disabled={!isEditing}
-                  rows={4}
-                />
-              </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="carbon" className="space-y-6">
-          <div className="grid md:grid-cols-4 gap-4">
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-2">
-                  <Leaf className="h-5 w-5 text-green-600" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Total Offset</p>
-                    <p className="text-lg font-semibold">{carbonStats.totalOffset} tCO2</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-2">
-                  <Building2 className="h-5 w-5 text-blue-600" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Projects</p>
-                    <p className="text-lg font-semibold">{carbonStats.projectsSupported}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-2">
-                  <Award className="h-5 w-5 text-yellow-600" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Certificates</p>
-                    <p className="text-lg font-semibold">{carbonStats.certificatesOwned}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-2">
-                  <Target className="h-5 w-5 text-purple-600" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Next Goal</p>
-                    <p className="text-lg font-semibold">{carbonStats.nextGoal} tCO2</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Sustainability Achievements</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="h-10 w-10 bg-green-100 rounded-full flex items-center justify-center">
-                      <Award className="h-5 w-5 text-green-600" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold">Carbon Neutral Champion</h4>
-                      <p className="text-sm text-muted-foreground">Offset over 2,000 tCO2</p>
-                    </div>
-                  </div>
-                  <Badge variant="default">Achieved</Badge>
-                </div>
-
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
-                      <Leaf className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold">Forest Guardian</h4>
-                      <p className="text-sm text-muted-foreground">Support 3+ reforestation projects</p>
-                    </div>
-                  </div>
-                  <Badge variant="default">Achieved</Badge>
-                </div>
-
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="h-10 w-10 bg-gray-100 rounded-full flex items-center justify-center">
-                      <Target className="h-5 w-5 text-gray-600" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold">Climate Leader</h4>
-                      <p className="text-sm text-muted-foreground">Offset over 5,000 tCO2</p>
-                    </div>
-                  </div>
-                  <Badge variant="outline">In Progress</Badge>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="settings" className="space-y-6">
+      <TabsContent value="settings" className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Notification Preferences</CardTitle>
@@ -374,10 +264,7 @@ export default function Profile() {
               <Button variant="outline">
                 Change Password
               </Button>
-              <Button variant="outline">
-                Enable Two-Factor Authentication
-              </Button>
-              <Button variant="destructive">
+             <Button variant="destructive">
                 Delete Account
               </Button>
             </CardContent>

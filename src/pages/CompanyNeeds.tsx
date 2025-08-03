@@ -22,7 +22,7 @@ const CompanyNeeds = () => {
     agreeTnC: false,
   });
 
-  const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
+  // const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
 
   // Mock data for land projects
   const landProjects = [
@@ -31,8 +31,8 @@ const CompanyNeeds = () => {
       name: "Amazon Rainforest Conservation",
       location: "Brazil",
       carbonOffset: "500 tons CO2/year",
-      pricePerTon: "$25",
-      totalPrice: "$12,500",
+      pricePerTon: 25,
+      totalPrice: 12500,
       certification: "VCS Standard",
       description: "Protecting 1,000 hectares of pristine Amazon rainforest",
       coordinates: [-60.0, -3.0]
@@ -42,8 +42,8 @@ const CompanyNeeds = () => {
       name: "Mangrove Restoration Project",
       location: "Indonesia",
       carbonOffset: "300 tons CO2/year",
-      pricePerTon: "$30",
-      totalPrice: "$9,000",
+      pricePerTon: 30,
+      totalPrice: 9000,
       certification: "Gold Standard",
       description: "Restoring coastal mangrove ecosystems",
       coordinates: [106.8, -6.2]
@@ -53,8 +53,8 @@ const CompanyNeeds = () => {
       name: "Reforestation Initiative",
       location: "Kenya",
       carbonOffset: "750 tons CO2/year", 
-      pricePerTon: "$20",
-      totalPrice: "$15,000",
+      pricePerTon: 20,
+      totalPrice: 15000,
       certification: "VCS Standard",
       description: "Planting native trees across degraded landscapes",
       coordinates: [37.9, -0.02]
@@ -94,37 +94,52 @@ const CompanyNeeds = () => {
     });
   };
 
-  const toggleProjectSelection = (projectId: string) => {
-    setSelectedProjects(prev => 
-      prev.includes(projectId) 
-        ? prev.filter(id => id !== projectId)
-        : [...prev, projectId]
-    );
-  };
+  // const toggleProjectSelection = (projectId: string) => {
+  //   setSelectedProjects(prev => 
+  //     prev.includes(projectId) 
+  //       ? prev.filter(id => id !== projectId)
+  //       : [...prev, projectId]
+  //   );
+  // };
 
-  const handlePurchase = () => {
-    if (selectedProjects.length === 0) {
-      toast({
-        title: "No projects selected",
-        description: "Please select at least one project to purchase.",
-        variant: "destructive"
-      });
-      return;
-    }
+  // const handlePurchase = () => {
+  const handlePurchase = (projectId: string) => {
+    // if (selectedProjects.length === 0) {
+    //   toast({
+    //     title: "No projects selected",
+    //     description: "Please select at least one project to purchase.",
+    //     variant: "destructive"
+    //   });
+    //   return;
+    // }
 
+    // toast({
+    //   title: "Processing payment",
+    //   description: `Purchasing ${selectedProjects.length} carbon offset project(s)...`
+    // });
+
+    // // Simulate payment processing
+    // setTimeout(() => {
+    //   toast({
+    //     title: "Purchase successful!",
+    //     description: "Your carbon offset certificates will be available shortly."
+    //   });
+    //   setSelectedProjects([]);
+    // }, 2000);
+  const project = landProjects.find((p) => p.id === projectId);
+  if (!project) return;
+
+  toast({
+    title: "Processing payment",
+    description: `Purchasing "${project.name}"...`,
+  });
+
+  setTimeout(() => {
     toast({
-      title: "Processing payment",
-      description: `Purchasing ${selectedProjects.length} carbon offset project(s)...`
+      title: "Purchase successful!",
+      description: `Your certificate for "${project.name}" will be available shortly.`,
     });
-
-    // Simulate payment processing
-    setTimeout(() => {
-      toast({
-        title: "Purchase successful!",
-        description: "Your carbon offset certificates will be available shortly."
-      });
-      setSelectedProjects([]);
-    }, 2000);
+  }, 2000);
   };
 
   const downloadCertificate = (certificateId: string) => {
@@ -143,11 +158,11 @@ const CompanyNeeds = () => {
         </div>
 
         <Tabs defaultValue="needs" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="needs">Input Needs</TabsTrigger>
             <TabsTrigger value="projects">Payment</TabsTrigger>
-            <TabsTrigger value="certificates">Certificates</TabsTrigger>
-            <TabsTrigger value="history">Purchase History</TabsTrigger>
+            {/* <TabsTrigger value="certificates">Certificates</TabsTrigger> */}
+            <TabsTrigger value="history">Current Transaction</TabsTrigger>
           </TabsList>
 
           <TabsContent value="needs" className="space-y-6">
@@ -172,33 +187,7 @@ const CompanyNeeds = () => {
                       onChange={(e) => handleInputChange("annualEmissions", e.target.value)}
                     />
                   </div>
-                  {/* <div className="space-y-2">
-                    <Label htmlFor="reduction">Target Reduction (%)</Label>
-                    <Input
-                      id="reduction"
-                      placeholder="e.g., 50"
-                      value={carbonNeeds.targetReduction}
-                      onChange={(e) => handleInputChange("targetReduction", e.target.value)}
-                    />
-                  </div> */}
-                  {/* <div className="space-y-2">
-                    <Label htmlFor="timeline">Timeline (years)</Label>
-                    <Input
-                      id="timeline"
-                      placeholder="e.g., 5"
-                      value={carbonNeeds.timeline}
-                      onChange={(e) => handleInputChange("timeline", e.target.value)}
-                    />
-                  </div> */}
-                  {/* <div className="space-y-2">
-                    <Label htmlFor="budget">Annual Budget (USD)</Label>
-                    <Input
-                      id="budget"
-                      placeholder="e.g., 50000"
-                      value={carbonNeeds.budget}
-                      onChange={(e) => handleInputChange("budget", e.target.value)}
-                    />
-                  </div> */}
+           
                   <div className="space-y-2">
                     <Label htmlFor="region">Preferred Forest</Label>
                     <Input
@@ -208,16 +197,7 @@ const CompanyNeeds = () => {
                       onChange={(e) => handleInputChange("preferredRegion", e.target.value)}
                     />
                   </div>
-                  {/* <div className="space-y-2">
-                    <Label htmlFor="type">Project Type</Label>
-                    <Input
-                      id="type"
-                      placeholder="e.g., Forest Conservation"
-                      value={carbonNeeds.projectType}
-                      onChange={(e) => handleInputChange("projectType", e.target.value)}
-                    />
-                  </div> */}
-                  </div>
+          </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="notes">Additional Notes</Label>
@@ -254,40 +234,30 @@ const CompanyNeeds = () => {
           <TabsContent value="projects" className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-semibold">Recommended Land Projects</h2>
-              <div className="flex gap-2">
-                <Button 
-                  onClick={handlePurchase}
-                  disabled={selectedProjects.length === 0}
-                  className="flex items-center gap-2"
-                >
-                  <CreditCard className="h-4 w-4" />
-                  Purchase Selected ({selectedProjects.length})
-                </Button>
-              </div>
+              
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {landProjects.map((project) => (
                 <Card 
                   key={project.id} 
-                  className={`cursor-pointer transition-all hover:shadow-lg ${
-                    selectedProjects.includes(project.id) 
-                      ? 'ring-2 ring-primary bg-primary/5' 
-                      : ''
-                  }`}
-                  onClick={() => toggleProjectSelection(project.id)}
+                  // className={`cursor-pointer transition-all hover:shadow-lg ${
+                  //   selectedProjects.includes(project.id) 
+                  //     ? 'ring-2 ring-primary bg-primary/5' 
+                  //     : ''
+                  // }`}
+                  // onClick={() => toggleProjectSelection(project.id)}
                 >
                   <CardHeader>
                     <div className="flex justify-between items-start">
                       <CardTitle className="text-lg">{project.name}</CardTitle>
-                      <Badge variant="secondary">{project.certification}</Badge>
                     </div>
                     <CardDescription className="flex items-center gap-1">
                       <MapPin className="h-3 w-3" />
                       {project.location}
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-3">
+                 <CardContent className="space-y-3">
                     <p className="text-sm text-muted-foreground">{project.description}</p>
                     <div className="space-y-2">
                       <div className="flex justify-between">
@@ -296,12 +266,28 @@ const CompanyNeeds = () => {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-sm font-medium">Price per ton:</span>
-                        <span className="text-sm">{project.pricePerTon}</span>
+                        <span className="text-sm text-primary">{project.pricePerTon}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-sm font-medium">Total Price:</span>
-                        <span className="text-sm font-bold text-primary">{project.totalPrice}</span>
+                        <span className="text-sm  text-primary">{project.totalPrice}</span>
                       </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm font-medium">Tax (10%):</span>
+                        <span className="text-sm text-primary">{Number(project.totalPrice)* 0.1}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm font-medium">Grand Total:</span>
+                        <span className="text-sm font-bold text-primary">{Number((project.totalPrice* 0.1) + project.totalPrice) }
+                        </span>
+                      </div>
+
+                    </div>
+                    <div className="pt-4">
+                      <button onClick={() => handlePurchase(project.id)}  className="px-4 py-2 text-sm font-medium bg-primary text-white rounded-md hover:bg-primary/90 transition">
+                        Proceed to Payment
+                      </button>
                     </div>
                   </CardContent>
                 </Card>
@@ -309,47 +295,12 @@ const CompanyNeeds = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="certificates" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Available Certificates</CardTitle>
-                <CardDescription>Download your carbon offset certificates</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {purchaseHistory.map((purchase) => (
-                    <div key={purchase.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="space-y-1">
-                        <h4 className="font-medium">{purchase.projectName}</h4>
-                        <p className="text-sm text-muted-foreground">
-                          Certificate ID: {purchase.certificateId}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {purchase.carbonOffset} • {purchase.amount}
-                        </p>
-                      </div>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => downloadCertificate(purchase.certificateId)}
-                        className="flex items-center gap-2"
-                      >
-                        <Download className="h-4 w-4" />
-                        Download
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="history" className="space-y-6">
+         <TabsContent value="history" className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Calendar className="h-5 w-5" />
-                  Purchase History
+                  Current Transaction
                 </CardTitle>
                 <CardDescription>View all your carbon offset purchases</CardDescription>
               </CardHeader>

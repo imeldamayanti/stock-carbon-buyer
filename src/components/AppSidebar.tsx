@@ -68,9 +68,9 @@ export function AppSidebar() {
           {!isCollapsed && (
             <div className="flex items-center gap-2">
               <img
-                src="/logo.png"
+                src={theme === "dark" ? "/logo-white.png" : "/logo.png"}
                 alt="Logo"
-                className="w-12 h-12   object-contain rounded-md"
+                className="w-12 h-12 object-contain rounded-md"
               />
             </div>
           )}
