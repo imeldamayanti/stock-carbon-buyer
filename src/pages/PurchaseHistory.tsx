@@ -1,66 +1,70 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { authorizedFetch } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Download, MapPin, Calendar, Leaf, Award } from "lucide-react";
 
-const mockPurchases = [
-  {
-    id: "CERT-2024-001",
-    projectName: "Amazon Rainforest Conservation",
-    location: "Acre, Brazil",
-    coordinates: [-9.0238, -70.812],
-    carbonCredits: 500,
-    purchaseDate: "2024-01-15",
-    price: 12500,
-    certificateUrl: "/certificates/cert-001.pdf",
-    projectDetails: {
-      area: "2,500 hectares",
-      biodiversity: "High",
-      communities: 3,
-      methodology: "VCS Standard"
-    }
-  },
-  {
-    id: "CERT-2024-002", 
-    projectName: "Mangrove Restoration Initiative",
-    location: "Sundarbans, Bangladesh",
-    coordinates: [22.3569, 89.0785],
-    carbonCredits: 750,
-    purchaseDate: "2024-02-20",
-    price: 18750,
-    certificateUrl: "/certificates/cert-002.pdf",
-    projectDetails: {
-      area: "1,800 hectares",
-      biodiversity: "Very High",
-      communities: 5,
-      methodology: "Gold Standard"
-    }
-  },
-  {
-    id: "CERT-2024-003",
-    projectName: "Reforestation Project Kenya",
-    location: "Nakuru County, Kenya", 
-    coordinates: [-0.3031, 36.0800],
-    carbonCredits: 1000,
-    purchaseDate: "2024-03-10",
-    price: 25000,
-    certificateUrl: "/certificates/cert-003.pdf",
-    projectDetails: {
-      area: "3,200 hectares",
-      biodiversity: "Medium",
-      communities: 8,
-      methodology: "VCS Standard"
-    }
-  }
-];
-
 export default function PurchaseHistory() {
-  const [selectedCertificate, setSelectedCertificate] = useState<typeof mockPurchases[0] | null>(null);
+  const [selectedCertificate, setSelectedCertificate] = useState<typeof paidTransactions[0] | null>(null);
+  type PaidTransaction = {
+    transaction_id: string;
+    zone_name: string;
+    zone_location: string;
+    total_carbon: number;
+    price_per_ton: number;
+    total_price: number;
+    tax: number;
+    grand_total: number;
+    transaction_date: string;
+    certificate_url: string;
+    // kalau nanti ada purchase date atau detail project, tinggal tambahkan
+  };
 
-  const totalCredits = mockPurchases.reduce((sum, purchase) => sum + purchase.carbonCredits, 0);
-  const totalSpent = mockPurchases.reduce((sum, purchase) => sum + purchase.price, 0);
+const [paidTransactions, setPaidTransactions] = useState<PaidTransaction[]>([]);
+const [loading, setLoading] = useState(true);
+// const [selectedCertificate, setSelectedCertificate] = useState<PaidTransaction | null>(null);
+
+useEffect(() => {
+  const fetchPaidTransactions = async () => {
+    try {
+      const res = await authorizedFetch("/api/buyer/transactions/list?status=paid");
+      const json = await res.json();
+      
+    // console.log("RESPONS MENTAH DARI API:", json);'
+    
+      if (json.status === "success") {
+         const cleanedData = json.data.map(item => {
+          let url = item.certificate_url.replace("/app/public/storage/", "");
+
+          // Hilangkan ".pdf.pdf" jadi cukup ".pdf"
+          url = url.replace(/\.pdf\.pdf$/, ".pdf");
+
+          return {
+            ...item,
+            certificate_url: url
+          };
+        });
+
+        
+        setPaidTransactions(cleanedData);
+      } else {
+        console.error("Failed to fetch:", json.message);
+      }
+    } catch (error) {
+      console.error("Error fetching transactions:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchPaidTransactions();
+}, []);
+
+
+  const totalCredits = paidTransactions.reduce((sum, purchase) => sum + purchase.total_carbon, 0);
+  const totalSpent = paidTransactions.reduce((sum, purchase) => sum + purchase.grand_total, 0);
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -89,75 +93,62 @@ export default function PurchaseHistory() {
       </div>
 
       <div className="grid gap-6">
-        {mockPurchases.map((purchase) => (
-          <Card key={purchase.id} className="hover:shadow-md transition-shadow">
+        {paidTransactions.map((purchase) => (
+          
+          <Card key={purchase.transaction_id} className="hover:shadow-md transition-shadow">
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div>
-                  <CardTitle className="text-xl">{purchase.projectName}</CardTitle>
+                  <CardTitle className="text-xl">{purchase.zone_name}</CardTitle>
                   <div className="flex items-center gap-2 mt-2 text-muted-foreground">
                     <MapPin className="h-4 w-4" />
-                    <span>{purchase.location}</span>
+                    <span>{purchase.zone_location}</span>
                   </div>
                 </div>
                 <Badge variant="outline" className="text-green-600 border-green-600">
-                  Certificate #{purchase.id}
+                  Certificate #{purchase.certificate_url}
                 </Badge>
-              </div>
+                </div>
             </CardHeader>
             <CardContent>
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Carbon Credits</p>
-                      <p className="text-lg font-semibold">{purchase.carbonCredits} tCO2</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Purchase Date</p>
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        <span>{new Date(purchase.purchaseDate).toLocaleDateString()}</span>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Total Price</p>
-                      <p className="text-lg font-semibold">${purchase.price.toLocaleString()}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Price per Credit</p>
-                      <p className="text-lg font-semibold">${(purchase.price / purchase.carbonCredits).toFixed(2)}</p>
-                    </div>
-                  </div>
-                </div>
+              <div className="grid gap-6">
+                                        
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-12 text-sm">
+                        <div>
+                          <span className="text-muted-foreground">Purchase Date:</span>
+                          <br />
+                            <span>
+                            {new Date(purchase.transaction_date).toLocaleDateString("id-ID", {
+                              day: "numeric",
+                              month: "long",
+                              year: "numeric",
+                            })}
+                          </span>
 
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p className="text-muted-foreground">Project Area</p>
-                      <p className="font-medium">{purchase.projectDetails.area}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Biodiversity</p>
-                      <p className="font-medium">{purchase.projectDetails.biodiversity}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Communities</p>
-                      <p className="font-medium">{purchase.projectDetails.communities} communities</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Methodology</p>
-                      <p className="font-medium">{purchase.projectDetails.methodology}</p>
-                    </div>
-                  </div>
+                        </div>
 
-                  <div className="flex gap-2">
+                      <div>
+                          <span className="text-muted-foreground">Purchase Time:</span>
+                          <br />
+                            <span>
+                              {new Date(purchase.transaction_date).toLocaleTimeString("id-ID", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </span>
+                        </div>
+
+                        <div>
+                          <span className="text-muted-foreground">Carbon Offset:</span>
+                          <p className="font-medium">${purchase.total_carbon}</p>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Amount:</span>
+                          <p className="font-medium">${purchase.grand_total.toFixed(2)}</p>
+                        </div>
+                        <div className="space-y-4">
+                                 <div className="flex gap-2">
                     <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" onClick={() => setSelectedCertificate(purchase)}>
-                          View Certificate
-                        </Button>
-                      </DialogTrigger>
                       <DialogContent className="max-w-2xl">
                         <DialogHeader>
                           <DialogTitle>Carbon Offset Certificate</DialogTitle>
@@ -171,26 +162,9 @@ export default function PurchaseHistory() {
                                 </div>
                                 <div>
                                   <h3 className="text-xl font-bold">Carbon Offset Certificate</h3>
-                                  <p className="text-muted-foreground">Certificate ID: {selectedCertificate.id}</p>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4 text-sm">
-                                  <div>
-                                    <p className="font-semibold">Project:</p>
-                                    <p>{selectedCertificate.projectName}</p>
-                                  </div>
-                                  <div>
-                                    <p className="font-semibold">Location:</p>
-                                    <p>{selectedCertificate.location}</p>
-                                  </div>
-                                  <div>
-                                    <p className="font-semibold">Carbon Credits:</p>
-                                    <p>{selectedCertificate.carbonCredits} tCO2</p>
-                                  </div>
-                                  <div>
-                                    <p className="font-semibold">Issue Date:</p>
-                                    <p>{new Date(selectedCertificate.purchaseDate).toLocaleDateString()}</p>
-                                  </div>
-                                </div>
+                              </div>
                               </div>
                             </div>
                             <div className="flex justify-center">
@@ -203,14 +177,66 @@ export default function PurchaseHistory() {
                         )}
                       </DialogContent>
                     </Dialog>
-                    
-                    <Button>
-                      <Download className="h-4 w-4 mr-2" />
-                      Download Certificate
-                    </Button>
+                    <a
+                        href={`${purchase.certificate_url}`}
+                        target="_blank"
+                      >
+                        <Button>
+                          <Download className="h-4 w-4 mr-2" />
+                          Download PDF Certificate
+                        </Button>
+                      </a>
+                    </div>
                   </div>
                 </div>
               </div>
+              
+              
+              {/* ppppppp ganti */}
+              {/* <div className="grid md:grid-cols-5 gap-6 text-sm items-center">
+                <div className="flex items-center gap-2">  
+                  <span className="text-muted-foreground">Purchase Date:</span>
+                  <br />
+                  <Calendar className="h-4 w-4" />
+                  <span>{new Date(purchase.transaction_date).toLocaleDateString()}</span>
+                </div>
+
+                <div>
+                  <span className="text-muted-foreground block">Carbon Offset:</span>
+                  <p className="font-medium">${purchase.total_carbon}</p>
+                </div>
+
+                <div>
+                  <span className="text-muted-foreground block">Amount:</span>
+                  <p className="font-medium">${purchase.grand_total.toFixed(2)}</p>
+                </div>
+
+                <div className="col-span-2 flex gap-3 justify-end">
+                  <a
+                    href={`http://localhost:8000/storage/${purchase.certificate_url}`}
+                    download
+                  >
+                    <Button>
+                      <Download className="h-4 w-4 mr-2" />
+                      Download PDF
+                    </Button>
+                  </a>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline">
+                        <Award className="h-4 w-4 mr-2" />
+                        View Certificate
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl">
+                      <DialogHeader>
+                        <DialogTitle>Carbon Offset Certificate</DialogTitle>
+                      </DialogHeader>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </div> */}
+
             </CardContent>
           </Card>
         ))}

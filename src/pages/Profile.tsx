@@ -21,7 +21,7 @@ export default function Profile() {
     email: "",
     phone: "",
     company: "",
-    position: "",
+    username: "",
     address: "",
     website: "",
   });
@@ -38,20 +38,22 @@ export default function Profile() {
           },
         });
 
-        console.log(response);
         const result = await response.json();
-
+        
         if (result.success) {
           const user = result.data.user;
+          console.log(user);
+          const company_user = result.data.company;
+          console.log(company_user);
 
           setFormData({
-            firstName: user.name?.split(" ")[0] || "",
-            lastName: user.name?.split(" ")[1] || "",
+            firstName: user.first_name || "",
+            lastName: user.last_name || "",
             email: user.email || "",
             phone: "",
-            company: "",
-            position: "",
-            address: "",
+            company: company_user && company_user.company ? company_user.company : "",
+            username: user.username,
+            address: user.address,
             website: "",
           });
         } else {
@@ -129,14 +131,6 @@ export default function Profile() {
             <CardContent className="space-y-6">
               <div className="flex items-center space-x-6">
                 <div className="relative">
-                  {/* <Avatar className="h-24 w-24">
-                  <AvatarImage
-                    src={`https://ui-avatars.com/api/?name=${formData.firstName}+${formData.lastName}&background=random&size=128`}
-                  />
-                  <AvatarFallback className="text-lg">
-                    {formData.firstName[0]}{formData.lastName[0]}
-                  </AvatarFallback>
-                  </Avatar> */}
                   {isEditing && (
                     <Button
                       size="sm"
@@ -148,9 +142,9 @@ export default function Profile() {
                   )}
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold">{formData.firstName} {formData.lastName}</h3>
-                  <p className="text-muted-foreground">{formData.position}</p>
-                  <p className="text-muted-foreground">{formData.company}</p>
+                  {/* <h3 className="text-xl font-semibold">{formData.firstName} {formData.lastName}</h3> */}
+                  {/* <p className="text-muted-foreground">{formData.username}</p> */}
+                  {/* <p className="text-muted-foreground">{formData.company}</p> */}
                 </div>
               </div>
 
@@ -188,7 +182,7 @@ export default function Profile() {
                     />
                   </div>
 
-                  <div>
+                  {/* <div>
                     <Label htmlFor="phone">Phone</Label>
                     <Input
                       id="phone"
@@ -196,7 +190,7 @@ export default function Profile() {
                       onChange={(e) => handleInputChange("phone", e.target.value)}
                       disabled={!isEditing}
                     />
-                  </div>
+                  </div> */}
                 </div>
 
                 <div className="space-y-4">
@@ -211,16 +205,16 @@ export default function Profile() {
                   </div>
 
                   <div>
-                    <Label htmlFor="position">Position</Label>
+                    <Label htmlFor="username">Username</Label>
                     <Input
-                      id="position"
-                      value={formData.position}
-                      onChange={(e) => handleInputChange("position", e.target.value)}
+                      id="username"
+                      value={formData.username}
+                      onChange={(e) => handleInputChange("username", e.target.value)}
                       disabled={!isEditing}
                     />
                   </div>
 
-                  <div>
+                  {/* <div>
                     <Label htmlFor="website">Website</Label>
                     <Input
                       id="website"
@@ -228,7 +222,7 @@ export default function Profile() {
                       onChange={(e) => handleInputChange("website", e.target.value)}
                       disabled={!isEditing}
                     />
-                  </div>
+                  </div> */}
                 </div>
               </div>
 

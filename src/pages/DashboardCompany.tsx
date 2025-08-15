@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,7 +8,8 @@ import { Separator } from '@/components/ui/separator';
 import Map from '@/components/Map';
 import { useTheme } from 'next-themes';
 import { motion } from 'framer-motion';
-
+import { Circle } from "react-leaflet";
+import { authorizedFetch } from "@/lib/auth";
 
 import { 
   TreePine, 
@@ -36,94 +37,176 @@ import {
 } from 'recharts';
 
 const DashboardCompany = () => {
-const { theme } = useTheme();
-const isDark = theme === 'dark';
-const strokeColor = isDark ? '#22D3EE' : '#10B981'; // cyan-400 vs green-500
-const gridColor = isDark ? '#334155' : '#E5E7EB';   // slate-700 vs gray-200
-const axisColor = isDark ? '#94A3B8' : '#a3bdb9ff'; 
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+  const strokeColor = isDark ? '#22D3EE' : '#10B981'; // cyan-400 vs green-500
+  const gridColor = isDark ? '#334155' : '#E5E7EB';   // slate-700 vs gray-200
+  const axisColor = isDark ? '#94A3B8' : '#a3bdb9ff'; 
 
-const MotionCard = motion(Card);
+  const MotionCard = motion(Card);
 
-const [carbonData] = useState({
-    totalOffset: 1250,
-    monthlyGoal: 500,
-    currentMonth: 380,
-    activeProjects: 8,
-    certificates: 12,
-    totalInvestment: 45000,
-    projectedImpact: 2500
+   const [carbonData, setCarbonData] = useState({
+    totalOffset: 0,
+    totalUptake: 0,
+    totalActiveProject: 0,
+    totalInvestment: 0,
+    totalCertificate: 0,
+    totalProject: 0,
+    totalVerified: 0,
+
+    treesProtected: 0,
+    landProtected: 0,
+    communitiesSupported: 0,
+
+    timeline: [],
+    purchasedProjects: []
+    
   });
 
-  const data = [
-    { month: 'Jan 2024', offset: 300 },
-    { month: 'Feb 2024', offset: 250 },
-    { month: 'Mar 2024', offset: 320 },
-    { month: 'Apr 2024', offset: 380 }
-  ];
 
-  const [purchasedProjects] = useState([
-    {
-      id: '1',
-      name: 'Amazon Rainforest Conservation',
-      coordinates: [-60.0261, -3.4653] as [number, number],
-      carbonUptake: 450,
-      area: 120,
-      status: 'Active',
-      certificate: 'AMZ-2024-001',
-      purchaseDate: '2024-01-15',
-      price: 12000,
-      projectType: 'Forest Conservation',
-      verification: 'Gold Standard'
-    },
-    {
-      id: '2',
-      name: 'Indonesian Mangrove Restoration',
-      coordinates: [106.8456, -6.2088] as [number, number],
-      carbonUptake: 320,
-      area: 85,
-      status: 'Active',
-      certificate: 'MNG-2024-002',
-      purchaseDate: '2024-02-10',
-      price: 8500,
-      projectType: 'Mangrove Restoration',
-      verification: 'VCS'
-    },
-    {
-      id: '3',
-      name: 'Kenya Reforestation Initiative',
-      coordinates: [37.9062, -0.0236] as [number, number],
-      carbonUptake: 280,
-      area: 75,
-      status: 'Pending',
-      certificate: 'KEN-2024-003',
-      purchaseDate: '2024-03-05',
-      price: 7200,
-      projectType: 'Reforestation',
-      verification: 'CDM'
-    },
-    {
-      id: '4',
-      name: 'Canadian Forest Protection',
-      coordinates: [-106.3468, 52.9399] as [number, number],
-      carbonUptake: 200,
-      area: 60,
-      status: 'Completed',
-      certificate: 'CAN-2024-004',
-      purchaseDate: '2024-01-28',
-      price: 6500,
-      projectType: 'Forest Protection',
-      verification: 'Gold Standard'
-    }
-  ]);
+  useEffect(() => {
+    const fetchCarbonData = async () => {
+      try {
+        const res = await authorizedFetch(
+          "/api/buyer/dashboard"
+        );
+        const json = await res.json();
 
-  const [recentActivities] = useState([
-    { id: 1, action: 'Certificate Downloaded', project: 'Amazon Rainforest Conservation', date: '2024-07-28' },
-    { id: 2, action: 'Payment Completed', project: 'Indonesian Mangrove Restoration', date: '2024-07-25' },
-    { id: 3, action: 'Project Verified', project: 'Kenya Reforestation Initiative', date: '2024-07-22' },
-    { id: 4, action: 'Impact Report Generated', project: 'Canadian Forest Protection', date: '2024-07-20' }
-  ]);
+        if (json.status === "success" && json.data?.simpleCard) {
+          const card = json.data.simpleCard;
+          const overviewCard = json.data.overviewCard;
 
-  const progressPercentage = (carbonData.currentMonth / carbonData.monthlyGoal) * 100;
+          const timelineData = overviewCard?.timeline?.data ?? {};
+          const timelineArray = Object.entries(timelineData).map(([date, offset]) => {
+          const d = new Date(date);
+          const month = d.toLocaleString("en-US", { month: "short" });
+          const year = d.getFullYear();
+            return {
+              month: `${month} ${year}`,
+              offset: offset as number
+            };
+          });
+
+
+          const projectMapArray = (json.data.projectMap ?? []).map(p => ({
+            name: p.zone_name,
+            coordinates: [
+              parseFloat(p.langlot?.[1] ?? "0"), // longitude
+              parseFloat(p.langlot?.[0] ?? "0")  // latitude
+            ] as [number, number],
+            carbonUptake: p.total_carbon,
+            verification: p.status 
+          }));
+
+
+           setCarbonData(prev => ({
+          ...prev,
+          totalOffset: card.total_carbon_offset?.amount ?? 0,
+          totalUptake: card.total_carbon_uptake?.amount ?? 0,
+          totalActiveProject: card.total_active_project?.amount ?? 0,
+          totalInvestment: card.total_investment?.amount ?? 0,
+          totalCertificate: card.total_certificate?.amount ?? 0,
+          totalProject: card.total_project?.amount ?? 0,
+          totalVerified: card.total_verified?.amount ?? 0,
+
+          treesProtected: overviewCard?.summary?.tress_protected ?? 0,
+          landProtected: overviewCard?.summary?.land_protected ?? 0,
+          communitiesSupported: overviewCard?.summary?.communities_supported ?? 0,
+
+          timeline: timelineArray,
+
+          purchasedProjects: projectMapArray 
+        }));
+
+          // setCarbonData({
+          //   totalOffset: card.total_carbon_offset?.amount ?? 0,
+          //   totalUptake: card.total_carbon_uptake?.amount ?? 0,
+          //   totalActiveProject: card.total_active_project?.amount ?? 0,
+          //   totalInvestment: card.total_investment?.amount ?? 0,
+          //   totalCertificate: card.total_certificate?.amount ?? 0,
+          //   totalProject: card.total_project?.amount ?? 0,
+          //   totalVerified: card.total_verified?.amount ?? 0,
+
+          //   treesProtected: overviewCard.summary.tress_protected ?? 0,
+          //   landProtected: overviewCard.summary.land_protected ?? 0,
+          //   communitiesSupported: overviewCard.summary.communities_supported ?? 0
+          // });
+
+         
+        }
+      } catch (error) {
+        console.error("Error fetching carbon data:", error);
+      }
+    };
+
+    fetchCarbonData();
+  }, []);
+
+  // data
+  // const data = [
+  //   { month: 'Jan 2024', offset: 300 },
+  //   { month: 'Feb 2024', offset: 250 },
+  //   { month: 'Mar 2024', offset: 320 },
+  //   { month: 'Apr 2024', offset: 380 }
+  // ];
+
+//   const [purchasedProjects] = useState([
+//   {
+//     name: 'Amazon Rainforest Conservation',
+//     coordinates: [-60.0261, -3.4653] as [number, number], // latitude, longitude
+//     carbonUptake: 450,
+//     verification: 'Gold Standard'
+//   },
+//   {
+//     id: '2',
+//     name: 'Indonesian Mangrove Restoration',
+//     coordinates: [106.8456, -6.2088] as [number, number],
+//     carbonUptake: 320,
+//     area: 85,
+//     status: 'Active',
+//     certificate: 'MNG-2024-002',
+//     purchaseDate: '2024-02-10',
+//     price: 8500,
+//     projectType: 'Mangrove Restoration',
+//     verification: 'VCS'
+//   },
+//   {
+//     id: '3',
+//     name: 'Kenya Reforestation Initiative',
+//     coordinates: [37.9062, -0.0236] as [number, number],
+//     carbonUptake: 280,
+//     area: 75,
+//     status: 'Active',
+//     certificate: 'KEN-2024-003',
+//     purchaseDate: '2024-03-05',
+//     price: 7200,
+//     projectType: 'Reforestation',
+//     verification: 'CDM'
+//   },
+//   {
+//     id: '4',
+//     name: 'Canadian Forest Protection',
+//     coordinates: [-106.3468, 52.9399] as [number, number], 
+//     carbonUptake: 200,
+//     area: 60,
+//     status: 'Active',
+//     certificate: 'CAN-2024-004',
+//     purchaseDate: '2024-01-28',
+//     price: 6500,
+//     projectType: 'Forest Protection',
+//     verification: 'Gold Standard'
+//   }
+// ]);
+
+
+  // const [recentActivities] = useState([
+  //   { id: 1, action: 'Certificate Downloaded', project: 'Amazon Rainforest Conservation', date: '2024-07-28' },
+  //   { id: 2, action: 'Payment Completed', project: 'Indonesian Mangrove Restoration', date: '2024-07-25' },
+  //   { id: 3, action: 'Project Verified', project: 'Kenya Reforestation Initiative', date: '2024-07-22' },
+  //   { id: 4, action: 'Impact Report Generated', project: 'Canadian Forest Protection', date: '2024-07-20' }
+  // ]);
+
+  // const progressPercentage = (carbonData.currentMonth / carbonData.monthlyGoal) * 100;
 
 
   return (
@@ -153,7 +236,7 @@ const [carbonData] = useState({
               <Leaf className="h-4 w-4 text-green-600 dark:text-green-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-800 dark:text-green-200">{carbonData.totalOffset.toLocaleString()}</div>
+              <div className="text-2xl font-bold text-green-800 dark:text-green-200">{carbonData.totalOffset}</div>
               <p className="text-xs text-green-600 dark:text-green-400">tons CO₂ equivalent</p>
             </CardContent>
           </Card>
@@ -164,8 +247,8 @@ const [carbonData] = useState({
               <TrendingUp className="h-4 w-4 text-blue-600 dark:text-blue-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-800 dark:text-blue-200">{carbonData.currentMonth}</div>
-              <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">of {carbonData.monthlyGoal} tons goal</p>
+              <div className="text-2xl font-bold text-blue-800 dark:text-blue-200">{carbonData.totalUptake}</div>
+              <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">of year</p>
             </CardContent>
           </Card>
 
@@ -175,7 +258,7 @@ const [carbonData] = useState({
               <TreePine className="h-4 w-4 text-purple-600 dark:text-purple-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-purple-800 dark:text-purple-200">{carbonData.activeProjects}</div>
+              <div className="text-2xl font-bold text-purple-800 dark:text-purple-200">{carbonData.totalActiveProject}</div>
               <p className="text-xs text-purple-600 dark:text-purple-400">across 4 countries</p>
             </CardContent>
           </Card>
@@ -186,7 +269,7 @@ const [carbonData] = useState({
               <DollarSign className="h-4 w-4 text-amber-600 dark:text-amber-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-amber-800 dark:text-amber-200">${carbonData.totalInvestment.toLocaleString()}</div>
+              <div className="text-2xl font-bold text-amber-800 dark:text-amber-200">${carbonData.totalInvestment}</div>
               <p className="text-xs text-amber-600 dark:text-amber-400">For Environmental Impact</p>
             </CardContent>
           </Card>
@@ -200,18 +283,18 @@ const [carbonData] = useState({
               <Award className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{carbonData.certificates}</div>
+              <div className="text-2xl font-bold">{carbonData.totalCertificate}</div>
               <p className="text-xs text-muted-foreground">verified certificates</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Projected Impact</CardTitle>
+              <CardTitle className="text-sm font-medium">Projected Impact (Carbon)</CardTitle>
               <Globe className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{carbonData.projectedImpact.toLocaleString()}</div>
+              <div className="text-2xl font-bold">{carbonData.totalProject.toLocaleString()}</div>
               <p className="text-xs text-muted-foreground">tons CO₂ by year-end</p>
             </CardContent>
           </Card>
@@ -222,7 +305,7 @@ const [carbonData] = useState({
               <ChartBar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">100%</div>
+              <div className="text-2xl font-bold">{carbonData.totalVerified}</div>
               <p className="text-xs text-muted-foreground">projects verified</p>
             </CardContent>
           </Card>
@@ -246,7 +329,7 @@ const [carbonData] = useState({
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                    <LineChart data={carbonData.timeline} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="month" tick={{ fontSize: 12, fill: axisColor }} />
                         <YAxis unit="t" tick={{ fontSize: 12, fill: axisColor }} />
@@ -283,21 +366,22 @@ const [carbonData] = useState({
                         <TreePine className="h-5 w-5 text-green-600" />
                         <span className="font-medium">Trees Protected</span>
                       </div>
-                      <span className="font-bold text-green-700 dark:text-green-300">125,000</span>
+                      {/* <div className="text-2xl font-bold">{carbonData.totalCertificate}</div> */}
+                      <span className="font-bold text-green-700 dark:text-green-300">{carbonData.treesProtected}</span>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950/50 rounded-lg">
                       <div className="flex items-center gap-3">
                         <Globe className="h-5 w-5 text-blue-600" />
                         <span className="font-medium">Land Protected</span>
                       </div>
-                      <span className="font-bold text-blue-700 dark:text-blue-300">340 hectares</span>
+                      <span className="font-bold text-blue-700 dark:text-blue-300">{carbonData.landProtected}</span>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-950/50 rounded-lg">
                       <div className="flex items-center gap-3">
                         <Award className="h-5 w-5 text-purple-600" />
                         <span className="font-medium">Communities Supported</span>
                       </div>
-                      <span className="font-bold text-purple-700 dark:text-purple-300">12</span>
+                      <span className="font-bold text-purple-700 dark:text-purple-300">{carbonData.communitiesSupported}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -318,7 +402,7 @@ const [carbonData] = useState({
               </CardHeader>
               <CardContent>
                 <div className="h-[600px] w-full rounded-lg overflow-hidden">
-                  <Map projects={purchasedProjects} />
+                  <Map projects={carbonData.purchasedProjects} />
                 </div>
               </CardContent>
             </Card>
@@ -386,7 +470,7 @@ const [carbonData] = useState({
             </div>
           </TabsContent> */}
 
-          <TabsContent value="activity" className="space-y-6">
+          {/* <TabsContent value="activity" className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>Recent Activity</CardTitle>
@@ -411,7 +495,7 @@ const [carbonData] = useState({
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
+          </TabsContent> */}
         </Tabs>
       </div>
     </div>

@@ -129,22 +129,6 @@ export function AppSidebar() {
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <div className="px-3 py-2 space-y-3">
-                {/* Language Switch */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Globe className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-xs text-muted-foreground">Language</span>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={toggleLanguage}
-                    className="h-6 px-2 text-xs"
-                  >
-                    {language}
-                  </Button>
-                </div>
-                
                 {/* Theme Switch */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">

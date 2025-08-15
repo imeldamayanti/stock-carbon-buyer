@@ -48,7 +48,8 @@ const LoginCompany = () => {
 
         const { token, user, roles, permissions } = result.data;
         saveAuthData(token, user, roles, permissions);
-
+        
+        // window.location.href = "http://localhost:5173/?loggedIn=true";
 
       toast({
         title: "Login Successful",

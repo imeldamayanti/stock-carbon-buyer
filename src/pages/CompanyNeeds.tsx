@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { authorizedFetch } from "@/lib/auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Download, MapPin, Leaf, Calendar, CreditCard, Building2, Smartphone, X, Lock, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Certificate } from "crypto";
 
 const Index = () => {
   const { toast } = useToast();
@@ -19,64 +20,6 @@ const Index = () => {
     agreeTnC: false,
   });
 
-  // Mock data for land projects
-  const landProjects = [
-    {
-      id: "1",
-      name: "Amazon Rainforest Conservation",
-      location: "Brazil",
-      carbonOffset: "500 tons CO2/year",
-      pricePerTon: 25,
-      totalPrice: 12500,
-      certification: "VCS Standard",
-      description: "Protecting 1,000 hectares of pristine Amazon rainforest",
-      coordinates: [-60.0, -3.0]
-    },
-    {
-      id: "2", 
-      name: "Mangrove Restoration Project",
-      location: "Indonesia",
-      carbonOffset: "300 tons CO2/year",
-      pricePerTon: 30,
-      totalPrice: 9000,
-      certification: "Gold Standard",
-      description: "Restoring coastal mangrove ecosystems",
-      coordinates: [106.8, -6.2]
-    },
-    {
-      id: "3",
-      name: "Reforestation Initiative",
-      location: "Kenya",
-      carbonOffset: "750 tons CO2/year", 
-      pricePerTon: 20,
-      totalPrice: 15000,
-      certification: "VCS Standard",
-      description: "Planting native trees across degraded landscapes",
-      coordinates: [37.9, -0.02]
-    }
-  ];
-
-  // Mock purchase history
-  const purchaseHistory = [
-    {
-      id: "PH001",
-      projectName: "Costa Rica Forest Protection",
-      purchaseDate: "2024-01-15",
-      carbonOffset: "200 tons CO2",
-      amount: "$5,000",
-      certificateId: "CERT-CR-001",
-      status: "Active"
-    },
-    {
-      id: "PH002", 
-      projectName: "Madagascar Biodiversity Project",
-      purchaseDate: "2023-12-10",
-      carbonOffset: "150 tons CO2",
-      amount: "$3,750",
-      certificateId: "CERT-MG-002",
-      status: "Completed"
-    }
-  ];
 
   const handleInputChange = (field: string, value: string) => {
     setCarbonNeeds(prev => ({ ...prev, [field]: value }));
@@ -106,8 +49,11 @@ const Index = () => {
 
     toast({
       title: "Success!",
-      description: "Your carbon needs have been submitted.",
+      description: "Your carbon needs have been submitted. Check the payment page for the next steps.",
     });
+    setTimeout(() => {
+    window.location.reload();
+    }, 2000);
 
     // Clear the form if needed
     setCarbonNeeds({
@@ -126,11 +72,90 @@ const Index = () => {
   }
   };
 
-  // handle 
+  // handle payment
+  type Transaction = {
+    transaction_id: number;
+    zone_name: string;
+    zone_location: string;
+    total_carbon: number;
+    price_per_ton: number;
+    total_price: number;
+    tax: number;
+    grand_total: number;
+  };
+
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        const res = await authorizedFetch(`/api/buyer/transactions/list?isToday=yes&status=pending_payment`);
+        const json = await res.json();
+
+        
+        if (json.status === "success") {
+          
+          setTransactions(json.data);
+        } else {
+          console.error("Fetch failed:", json.message);
+        }
+      } catch (error) {
+        console.error("Error fetching transactions:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTransactions(); //ini line 162
+  }, []);
+
+  // handle proses payment
+  const completePayment = async (transactionId: string) => {
+  try {
+    const res = await authorizedFetch(`/api/buyer/transactions/${transactionId}/proceed-payment`, {
+      method: "get",
+    });
+
+    const json = await res.json();
+
+    if (res.ok && json.status === "success") {
+      toast({
+        title: "Payment Completed",
+        description: `Payment for transaction #${transactionId} is now marked as completed.`,
+      });
+      // opsional: refresh data
+
+      
+
+      setTimeout(() => {
+      window.location.reload();
+      // setActiveTab("history");
+      }, 2000);
+
+      setShowConfirm(false);
+      setSelectedProjectId(null);
+    } else {
+      toast({
+        title: "Payment Failed",
+        description: json.message || "Something went wrong.",
+        variant: "destructive",
+      });
+    }
+  } catch (error) {
+    toast({
+      title: "Network Error",
+      description: "Failed to connect to the server.",
+      variant: "destructive",
+    });
+    console.error("Payment error:", error);
+  }
+};
 
 
   const [showModal, setShowModal] = useState(false);
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  // const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
   const [paymentMethod, setPaymentMethod] = useState("e_wallet");
   const [showConfirm, setShowConfirm] = useState(false);
   const [paymentDetails, setPaymentDetails] = useState({
@@ -143,43 +168,83 @@ const Index = () => {
     walletId: ""
   });
 
-  const openPaymentModal = (projectId: string) => {
+  const openPaymentModal = (projectId: number) => {
     setSelectedProjectId(projectId);
     setShowModal(true);
   };
 
-  const handlePurchase = () => {
+  const handlePurchase = async () => {
     if (!selectedProjectId) return;
 
-    const project = landProjects.find((p) => p.id === selectedProjectId);
+    const project = transactions.find((p) => p.transaction_id == selectedProjectId);
     if (!project) return;
 
     toast({
       title: "Processing payment",
-      description: `Paying for "${project.name}" with ${paymentMethod.replace("_", " ")}...`,
+      description: `Paying for "${project.zone_name}" with ${paymentMethod.replace("_", " ")}...`,
     });
 
-    setTimeout(() => {
-      toast({
-        title: "Purchase successful!",
-        description: `Your certificate for "${project.name}" will be available shortly.`,
-      });
-      setShowModal(false);
-      setSelectedProjectId(null);
-      setPaymentMethod("credit_card");
-      setPaymentDetails({
-        cardNumber: "",
-        expiryDate: "",
-        cvv: "",
-        cardHolder: "",
-        bankAccount: "",
-        routingNumber: "",
-        walletId: ""
-      });
-    }, 2000);
+    await completePayment(`${selectedProjectId}`)
+
   };
 
-  const selectedProject = selectedProjectId ? landProjects.find(p => p.id === selectedProjectId) : null;
+  const selectedProject = selectedProjectId ? transactions.find(p => p.transaction_id === Number(selectedProjectId)) : null;
+
+
+  // handle history pembelian
+  type PurchaseHistoryItem = Transaction & {
+  transaction_date: Date;
+  formattedDate: string;
+  formattedTime: string;
+  certificate_url: string;
+  };
+  const [purchaseHistory, setPurchaseHistory] = useState<PurchaseHistoryItem[]>([]);
+
+  useEffect(() => {
+    const fetchPurchaseHistory = async () => {
+    try {
+      const res = await authorizedFetch(
+        `/api/buyer/transactions/list?isToday=yes&status=paid`
+      );
+      const json = await res.json();
+
+      if (json.status === "success") {
+        const history: PurchaseHistoryItem[] = json.data.map((item: any) => {
+          // Proses certificate_url
+          let certUrl = item.certificate_url || "";
+          certUrl = certUrl.replace("/app/public/storage/", "");
+          certUrl = certUrl.replace(/\.pdf\.pdf$/, ".pdf");
+
+          return {
+            ...item,
+            certificate_url: certUrl,
+            transaction_date: item.transaction_date,
+            formattedDate: new Date(item.transaction_date).toLocaleDateString(
+              "id-ID",
+              {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              }
+            ),
+            formattedTime: new Date().toLocaleTimeString("id-ID", {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+          };
+        });
+
+        setPurchaseHistory(history);
+      } else {
+        console.error("Fetch failed (paid):", json.message);
+      }
+    } catch (error) {
+      console.error("Error fetching purchase history:", error);
+    }
+  };
+
+  fetchPurchaseHistory();
+  }, []);
 
   const renderPaymentForm = () => {
     switch (paymentMethod) {
@@ -342,6 +407,7 @@ const Index = () => {
                       checked={carbonNeeds.agreeTnC}
                       onChange={(e) => handleInputChange("agreeTnC", e.target.checked.toString())}
                       className="h-4 w-4"
+                      required
                     />
                     <label htmlFor="agree" className="text-sm text-muted-foreground">
                       By clicking this I agree to the Terms and Conditions
@@ -358,47 +424,47 @@ const Index = () => {
 
           <TabsContent value="projects" className="space-y-6">
             <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-semibold">Recommended Land Projects</h2>
+              <h2 className="text-2xl font-semibold">Need Payment</h2>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {landProjects.map((project) => (
-                <Card key={project.id}>
+              {transactions.map((project) => (
+                <Card key={project.transaction_id}>
                   <CardHeader>
                     <div className="flex justify-between items-start">
-                      <CardTitle className="text-lg">{project.name}</CardTitle>
+                      <CardTitle className="text-lg">{project.zone_name}</CardTitle>
                     </div>
                     <CardDescription className="flex items-center gap-1">
                       <MapPin className="h-3 w-3" />
-                      {project.location}
+                      {project.zone_location}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    <p className="text-sm text-muted-foreground">{project.description}</p>
+                    {/* <p className="text-sm text-muted-foreground">{project.description}</p> */}
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <span className="text-sm font-medium">Carbon Offset:</span>
-                        <span className="text-sm text-primary font-semibold">{project.carbonOffset}</span>
+                        <span className="text-sm text-primary font-semibold">{project.total_carbon}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-sm font-medium">Price per ton:</span>
-                        <span className="text-sm text-primary">{project.pricePerTon}</span>
+                        <span className="text-sm text-primary">${project.price_per_ton}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-sm font-medium">Total Price:</span>
-                        <span className="text-sm text-primary">{project.totalPrice}</span>
+                        <span className="text-sm text-primary">${project.total_price}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-sm font-medium">Tax (10%):</span>
-                        <span className="text-sm text-primary">{Number(project.totalPrice) * 0.1}</span>
+                        <span className="text-sm text-primary">${(project.tax)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-sm font-medium">Grand Total:</span>
-                        <span className="text-sm font-bold text-primary">{Number((project.totalPrice * 0.1) + project.totalPrice)}</span>
+                        <span className="text-sm font-bold text-primary">${(project.grand_total.toFixed(2))}</span>
                       </div>
                     </div>
                     <div className="pt-4">
-                      <Button onClick={() => openPaymentModal(project.id)} className="w-full">
+                      <Button onClick={() => openPaymentModal(project.transaction_id)} className="w-full">
                         Proceed to Payment
                       </Button>
                     </div>
@@ -420,34 +486,104 @@ const Index = () => {
               <CardContent>
                 <div className="space-y-4">
                   {purchaseHistory.map((purchase) => (
-                    <div key={purchase.id} className="border rounded-lg p-4">
+                    <div key={purchase.transaction_id} className="border rounded-lg p-4">
                       <div className="flex justify-between items-start mb-2">
-                        <h4 className="font-medium">{purchase.projectName}</h4>
-                        <Badge variant={purchase.status === "Active" ? "default" : "secondary"}>
-                          {purchase.status}
-                        </Badge>
+                        <h4 className="font-medium">{purchase.zone_name}</h4>
+                          <Badge variant="default">
+                            Paid
+                          </Badge>
                       </div>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
                         <div>
                           <span className="text-muted-foreground">Purchase Date:</span>
-                          <p className="font-medium">{purchase.purchaseDate}</p>
+                          <p className="font-medium">{purchase.formattedDate}</p>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Purchase Time:</span>
+                          <br />
+                          <span>
+                              {new Date(purchase.transaction_date).toLocaleTimeString("id-ID", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </span>
                         </div>
                         <div>
                           <span className="text-muted-foreground">Carbon Offset:</span>
-                          <p className="font-medium">{purchase.carbonOffset}</p>
+                          <p className="font-medium">${purchase.total_carbon}</p>
                         </div>
                         <div>
                           <span className="text-muted-foreground">Amount:</span>
-                          <p className="font-medium">{purchase.amount}</p>
+                          <p className="font-medium">${purchase.grand_total.toFixed(2)}</p>
                         </div>
                         <div>
                           <span className="text-muted-foreground">Certificate:</span>
-                          <p className="font-medium">{purchase.certificateId}</p>
+                          <br />
+                          
+                         <a
+                         
+                          href={`${purchase.certificate_url}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ textDecoration: "none" }} // biar gak ada underline
+                        >
+                          <Badge variant="outline">
+                            Link
+                          </Badge>
+                        </a>
+
+
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
+                {/* <div className="space-y-4">
+                  
+                  {purchaseHistory.map((purchase) => {
+                    // console.log("purchaseHistory sebelum map:", purchaseHistory);
+
+                    // console.log("certificate_url dari FE:", purchase.certificate_url);
+                    // console.log("Apakah diawali http?", purchase.certificate_url.startsWith("http"));
+
+                    return (
+                      <div key={purchase.transaction_id} className="border rounded-lg p-4">
+                        <div className="flex justify-between items-start mb-2">
+                          <h4 className="font-medium">{purchase.zone_name}</h4>
+                          <Badge variant="default">Paid</Badge>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
+                          <div>
+                            <span className="text-muted-foreground">Purchase Date:</span>
+                            <p className="font-medium">{purchase.formattedDate}</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Purchase Time:</span>
+                            <br />
+                            <span>
+                              {new Date(purchase.transaction_date).toLocaleTimeString("id-ID", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </span>
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Certificate:</span>
+                          <br />
+                          <a
+                            href={purchase.certificate_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ textDecoration: "none" }}
+                          >
+                            <Badge variant="outline">Link</Badge>
+                          </a>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div> */}
               </CardContent>
             </Card>
           </TabsContent>
@@ -482,16 +618,16 @@ const Index = () => {
             {/* Project Summary */}
             {selectedProject && (
               <div className="p-6 bg-muted/30 border-b">
-                <h3 className="font-medium mb-2">{selectedProject.name}</h3>
+                <h3 className="font-medium mb-2">{selectedProject.zone_name}</h3>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Carbon Offset:</span>
-                    <span className="font-medium">{selectedProject.carbonOffset}</span>
+                    <span className="font-medium">{selectedProject.total_carbon}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Total Amount:</span>
                     <span className="font-semibold text-primary">
-                      ${Number((selectedProject.totalPrice * 0.1) + selectedProject.totalPrice).toLocaleString()}
+                      ${Number(selectedProject.grand_total)}
                     </span>
                   </div>
                 </div>
@@ -588,6 +724,7 @@ const Index = () => {
                   onClick={() => {
                   setShowModal(false);
                   setShowConfirm(true);
+                  
                 }}
                 className="flex-1"
                 >
@@ -618,7 +755,7 @@ const Index = () => {
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-medium">Total Amount:</span>
                     <span className="font-bold text-primary">
-                      ${Number((selectedProject.totalPrice * 0.1) + selectedProject.totalPrice).toLocaleString()}
+                      ${selectedProject.grand_total}
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-sm text-muted-foreground">

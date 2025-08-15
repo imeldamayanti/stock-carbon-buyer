@@ -1,14 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import type { FeatureCollection, Point } from 'geojson';
 
 interface MapProps {
   projects?: Array<{
     id: string;
     name: string;
-    coordinates: [number, number];
+    coordinates: [number, number]; // [lng, lat]
     carbonUptake: number;
     area: number;
     status: string;
@@ -18,39 +17,29 @@ interface MapProps {
 const Map: React.FC<MapProps> = ({ projects = [] }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
-  const [mapboxToken, setMapboxToken] = useState('');
-  const [isMapInitialized, setIsMapInitialized] = useState(false);
+  const [mapboxToken] = useState('pk.eyJ1IjoiaW1lbGRhYSIsImEiOiJjbWR4eTc3d2gyZ3FnMmtxMm5oZHRhZXZrIn0.begkUCZrspQjnqZKVDh6cA');
 
-  const initializeMap = () => {
-    if (!mapContainer.current || !mapboxToken) return;
+  useEffect(() => {
+    if (!mapContainer.current || map.current || !mapboxToken) return;
 
-    try {
-      mapboxgl.accessToken = mapboxToken;
-      
-      map.current = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/satellite-streets-v12',
-        projection: 'globe' as any,
-        zoom: 2,
-        center: [0, 20],
-        pitch: 45,
-      });
+    mapboxgl.accessToken = mapboxToken;
 
-      // Add navigation controls
-      map.current.addControl(
-        new mapboxgl.NavigationControl({
-          visualizePitch: true,
-        }),
-        'top-right'
-      );
+    // Inisialisasi Map
+    map.current = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: 'mapbox://styles/mapbox/streets-v11',
+      center: [106.8272, -6.1751], // Jakarta
+      zoom: 4,
+      projection: 'mercator',
+    });
 
-      // Add markers for purchased projects
+    map.current.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'top-right');
+
+    map.current.on('load', () => {
       projects.forEach((project) => {
-        if (!map.current) return;
-        
-        const el = document.createElement('div');
-        el.className = 'marker';
-        el.style.cssText = `
+        const markerElement = document.createElement('div');
+        markerElement.className = 'marker';
+        markerElement.style.cssText = `
           background-color: #10b981;
           width: 20px;
           height: 20px;
@@ -62,63 +51,66 @@ const Map: React.FC<MapProps> = ({ projects = [] }) => {
 
         const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
           <div class="p-2">
-            <h3 class="font-semibold text-sm">${project.name}</h3>
+            <h3 class="font-semibold text-sm text-gray-600">${project.name}</h3>
             <p class="text-xs text-gray-600">Carbon Uptake: ${project.carbonUptake} tons CO₂</p>
-            <p class="text-xs text-gray-600">Area: ${project.area} hectares</p>
-            <p class="text-xs text-gray-600">Status: ${project.status}</p>
+            <p class="text-xs text-gray-600">Status: Paid </p>
           </div>
         `);
 
-        new mapboxgl.Marker(el)
+        new mapboxgl.Marker(markerElement)
           .setLngLat(project.coordinates)
           .setPopup(popup)
-          .addTo(map.current);
+          .addTo(map.current!);
+
+        // Circle Layer
+        const circleId = `circle-${project.id}`;
+        const radiusInMeters = 2000;
+
+        const geojson: FeatureCollection<Point> = {
+          type: 'FeatureCollection',
+          features: [
+            {
+              type: 'Feature',
+              geometry: {
+                type: 'Point',
+                coordinates: project.coordinates,
+              },
+              properties: {},
+            },
+          ],
+        };
+
+        if (!map.current.getSource(circleId)) {
+          map.current.addSource(circleId, {
+            type: 'geojson',
+            data: geojson,
+          });
+
+          map.current.addLayer({
+            id: circleId,
+            type: 'circle',
+            source: circleId,
+            paint: {
+              'circle-radius': {
+                stops: [
+                  [0, 0],
+                  [20, radiusInMeters / 2],
+                ],
+                base: 2,
+              },
+              'circle-color': '#10b981',
+              'circle-opacity': 0.2,
+            },
+          });
+        }
       });
-
-      setIsMapInitialized(true);
-    } catch (error) {
-      console.error('Error initializing map:', error);
-    }
-  };
-
-  useEffect(() => {
-    if (mapboxToken) {
-      initializeMap();
-    }
+    });
 
     return () => {
       map.current?.remove();
+      map.current = null;
     };
   }, [mapboxToken, projects]);
-
-  if (!isMapInitialized) {
-    return (
-      <div className="w-full h-full bg-muted rounded-lg flex flex-col items-center justify-center p-6">
-        <div className="max-w-md w-full space-y-4">
-          <h3 className="text-lg font-semibold text-center">Map Configuration</h3>
-          <p className="text-sm text-muted-foreground text-center">
-            Enter your Mapbox public token to view purchased land projects on the map.
-          </p>
-          <div className="space-y-2">
-            <Label htmlFor="mapboxToken">Mapbox Public Token</Label>
-            <Input
-              id="mapboxToken"
-              type="text"
-              placeholder="pk.eyJ1IjoieW91ci11c2VybmFtZSIsImEiOiJjbGJidGtlb..."
-              value={mapboxToken}
-              onChange={(e) => setMapboxToken(e.target.value)}
-            />
-          </div>
-          <p className="text-xs text-muted-foreground text-center">
-            Get your token from{' '}
-            <a href="https://mapbox.com/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-              mapbox.com
-            </a>
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="relative w-full h-full">
