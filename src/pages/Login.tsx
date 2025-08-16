@@ -29,7 +29,7 @@ const LoginCompany = () => {
 
     try {
       const form = new FormData();
-      form.append("email", formData.email); // pakai 'username' kalau backend pakai OAuth2PasswordRequestForm
+      form.append("email", formData.email);
       form.append("password", formData.password);
 
       const response = await apiFetch("/api/auth/login", {
@@ -39,25 +39,29 @@ const LoginCompany = () => {
 
       const result = await response.json();
 
-
       if (!response.ok) {
-        const err = await response.json();
-        console.log("Error detail:", err);
-        throw new Error(err.detail || "Login failed");
+        throw new Error(result.detail || "Login failed");
       }
 
-        const { token, user, roles, permissions } = result.data;
-        saveAuthData(token, user, roles, permissions);
-        
-        // window.location.href = "http://localhost:5173/?loggedIn=true";
+      const { token, user, roles, permissions } = result.data;
+      saveAuthData(token, user, roles, permissions); // save token locally
 
       toast({
         title: "Login Successful",
         description: "Welcome back!",
       });
-      navigate("/dashboard-company"); 
 
-      // Redirect if needed...
+      // ambil redirect dari query param (sesuai landing page)
+      const params = new URLSearchParams(window.location.search);
+      const redirect = params.get("redirect");
+
+      if (redirect) {
+        // kirim token ke redirect URL
+        const separator = redirect.includes("?") ? "&" : "?";
+        window.location.href = `${redirect}${separator}token=${encodeURIComponent(token)}`;
+      } else {
+        navigate("/dashboard-company");
+      }
     } catch (error: any) {
       toast({
         title: "Login Failed",
@@ -66,6 +70,7 @@ const LoginCompany = () => {
       });
     }
   };
+
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
