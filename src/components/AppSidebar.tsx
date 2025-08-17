@@ -64,7 +64,7 @@ export function AppSidebar() {
     <Sidebar
       collapsible="icon"
     >
-      <SidebarHeader className="border-b border-sidebar-border">
+      {/* <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center gap-2 px-3 py-2">
           <SidebarTrigger className="-ml-1" />
           {!isCollapsed && (
@@ -77,7 +77,24 @@ export function AppSidebar() {
             </div>
           )}
         </div>
+      </SidebarHeader> */}
+      <SidebarHeader className="border-b border-sidebar-border">
+        <div className="flex items-center gap-2 px-3 py-2">
+          <SidebarTrigger className="-ml-1" />
+          {!isCollapsed && (
+            <div className="flex items-center gap-2">
+              <a href="https://stocarbon.web.id/"  rel="noopener noreferrer">
+                <img
+                  src={theme === "dark" ? "/logo-white.png" : "/logo.png"}
+                  alt="Logo"
+                  className="w-12 h-12 object-contain rounded-md"
+                />
+              </a>
+            </div>
+          )}
+        </div>
       </SidebarHeader>
+
       <SidebarContent>
         {/* Company Section */}
         <SidebarGroup>
